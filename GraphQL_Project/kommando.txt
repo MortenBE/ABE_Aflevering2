@@ -1,0 +1,42 @@
+npm init
+npm i express express-graphql graphql
+npm i --save-dev nodemon
+
+-> Start server -> nodemon server.js
+
+Første Query:
+
+query{message} (alternativ: {message}) <- GraphQL will ad the query keyword as deafult
+
+
+{books {
+  name
+}}
+
+{books {
+  name
+  author{name}
+}}
+
+{authors {
+  name
+  books{name}
+}}
+
+{
+  book(id: 1){
+  name
+  }
+}
+
+
+OBS: Fields returnere en funktion som returnere en værdie fordi at de forskellige typer refere til hindanden
+
+
+mutation{
+  addBook(name: "Good Book", authorId: 1)
+  {
+    name
+    id    
+  }
+}
