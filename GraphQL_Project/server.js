@@ -1,5 +1,7 @@
 const express = require('express')
 const expressGraphQL = require('express-graphql').graphqlHTTP
+const mongoose = require('mongoose')
+var ObjectID = require('mongodb').ObjectID;
 
 var authorsdb = require("./models/author");
 require("./models/db");
@@ -133,8 +135,8 @@ const RootMutationType = new GraphQLObjectType({
             args: {                
                 id: { type: GraphQLNonNull(GraphQLString) }
             },
-            resolve: (parent, args) => {                
-                //return authorsdb.findOneAndRemove({_id: args.id})
+            resolve: async (parent, args) =>  {                
+                return authorsdb.findByIdAndDelete(args.id)
             }
         }
 

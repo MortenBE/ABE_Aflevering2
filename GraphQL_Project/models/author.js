@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 //Obs: role could change to roles array.
 const authorSchema = new Schema({
-  _id: String,
+  id: String,
   firstname: String,
   lastname: String
 });
