@@ -1,5 +1,8 @@
 const express = require('express')
 const expressGraphQL = require('express-graphql').graphqlHTTP
+
+var authorsdb = require("./models/author");
+require("./models/db");
 const {
     GraphQLSchema,
     GraphQLObjectType,
@@ -11,12 +14,15 @@ const {
 
 const app = express()
 
+/*
 const authors = [
 	{ id: 1, name: 'J. K. Rowling' },
 	{ id: 2, name: 'J. R. R. Tolkien' },
 	{ id: 3, name: 'Brent Weeks' }
 ]
+*/
 
+/*
 const books = [
 	{ id: 1, name: 'Harry Potter and the Chamber of Secrets', authorId: 1 },
 	{ id: 2, name: 'Harry Potter and the Prisoner of Azkaban', authorId: 1 },
@@ -27,6 +33,7 @@ const books = [
 	{ id: 7, name: 'The Way of Shadows', authorId: 3 },
 	{ id: 8, name: 'Beyond the Shadows', authorId: 3 }
 ]
+*/
 
 
 const BookType = new GraphQLObjectType({
@@ -47,16 +54,18 @@ const BookType = new GraphQLObjectType({
 
 const AuthorType = new GraphQLObjectType({
     name: 'Author',
-    description: 'This represents an author of a book',
-    fields: () => ({
-        id: { type: GraphQLNonNull(GraphQLInt) },
-        name: { type: GraphQLNonNull(GraphQLString) },
+    description: 'This is an author',
+    fields: () => ({        
+        firstname: { type: GraphQLNonNull(GraphQLString) },
+        lastname: { type: GraphQLNonNull(GraphQLString) }
+        /*
         books: {
             type: new GraphQLList(BookType),
             resolve: (author) => {
                 return books.filter(book => book.authorId === author.id);
             }
-        }        
+        }  
+        */      
     })
 })
 
@@ -68,7 +77,7 @@ const RootQueryType = new GraphQLObjectType({
     name: 'Query',
     description: 'Root Query',
     fields: () => ({
-        book: {
+        /*book: {
             type: BookType,
             description: 'A Single Book',
             args: {
@@ -81,11 +90,15 @@ const RootQueryType = new GraphQLObjectType({
             description: 'List of all Books',
             resolve: () => books
         },
+        */
         authors: {
             type: new GraphQLList(AuthorType),
             description: 'List of all Authors',
-            resolve: () => authors
-        },
+            resolve: () => {
+                return authorsdb.find()
+            }
+        }
+        /*
         author: {
             type: AuthorType,
             description: 'A Single Author',
@@ -94,13 +107,17 @@ const RootQueryType = new GraphQLObjectType({
             },
             resolve: (parent, args) => authors.find(author => author.id === args.id)
         }
+        */
     })
 })
+
+ 
 
 const RootMutationType = new GraphQLObjectType({
     name: 'Mutation',
     description: 'Root Mutation',
     fields: () => ({
+        /*
         addBook: {
             type: BookType,
             description: 'Add a Book',
@@ -118,46 +135,31 @@ const RootMutationType = new GraphQLObjectType({
                 return book
             }
         },
+        */
         addAuthor: {
             type: AuthorType,
             description: 'Add an Author',
             args: {                
-                name: { type: GraphQLNonNull(GraphQLString) }
+                firstname: { type: GraphQLNonNull(GraphQLString) },
+                lastname: { type: GraphQLNonNull(GraphQLString) }
             },
             resolve: (parent, args) => {
                 const author = {
-                    id: authors.length + 1,
-                    name: args.name
+                    firstname: args.firstname,
+                    lastname: args.lastname                    
                 }
-                authors.push(author)
+                authorsdb.create(author)
                 return author
             }
         }
+
     })
 })
-
-/*
-const schema = new GraphQLSchema({
-    query: new GraphQLObjectType({
-        name: 'HelloWorld',
-        fields: () => ({
-            message: { 
-                type: GraphQLString,
-                resolve: () => 'Hey Bitch'            
-            }       
-        })
-    })
-})
-*/
-
-
 
 const schema = new GraphQLSchema({
     query: RootQueryType,
     mutation: RootMutationType
 })
-
-
 
 app.use('/graphql', expressGraphQL({
     schema: schema, 
