@@ -1,9 +1,12 @@
 const express = require('express')
 const expressGraphQL = require('express-graphql').graphqlHTTP
 const mongoose = require('mongoose')
-var ObjectID = require('mongodb').ObjectID;
+
+//var ObjectID = require('mongodb').ObjectID;
 
 var authorsdb = require("./models/author");
+var booksdb = require("./models/book");
+
 require("./models/db");
 const {
     GraphQLSchema,
@@ -18,19 +21,21 @@ const app = express()
 
 const BookType = new GraphQLObjectType({
     name: 'Book',
-    description: 'This represents a book written by an author',
+    description: 'This is a book',
     fields: () => ({
-        id: { type: GraphQLNonNull(GraphQLInt) },
-        name: { type: GraphQLNonNull(GraphQLString) },
-        bookId: { type: GraphQLNonNull(GraphQLInt) },
+        _id: { type: GraphQLNonNull(GraphQLString) },
+        title: { type: GraphQLNonNull(GraphQLString) },
+        authorId: { type: GraphQLNonNull(GraphQLString) },       
         author: {
             type: AuthorType,
-            resolve: (book) => {
-                return authors.find(author => author.id === book.authorId)
+            resolve: (book) => {               
+                return authorsdb.findOne({_id: book.authorId})           
             }
-        }
+        }        
     })
 })
+
+
 
 const AuthorType = new GraphQLObjectType({
     name: 'Author',
@@ -54,7 +59,8 @@ const RootQueryType = new GraphQLObjectType({
     name: 'Query',
     description: 'Root Query',
     fields: () => ({
-        /*book: {
+        /*
+        book: {
             type: BookType,
             description: 'A Single Book',
             args: {
@@ -62,29 +68,32 @@ const RootQueryType = new GraphQLObjectType({
             },
             resolve: (parent, args) => books.find(book => book.id === args.id)
         },
+        */
+        
         books: {
             type: new GraphQLList(BookType),
-            description: 'List of all Books',
-            resolve: () => books
-        },
-        */
+            description: 'List of Books',
+            resolve: () => {
+                return booksdb.find()
+            }
+        },               
         authors: {
             type: new GraphQLList(AuthorType),
             description: 'List of all Authors',
             resolve: () => {
                 return authorsdb.find()
             }
-        }
-        /*
+        },        
         author: {
             type: AuthorType,
             description: 'A Single Author',
             args: {
-                id: {type: GraphQLInt}
+                id: { type: GraphQLNonNull(GraphQLString) }
             },
-            resolve: (parent, args) => authors.find(author => author.id === args.id)
-        }
-        */
+            resolve: (parent, args) => {
+                return authorsdb.findOne({_id: args.id})
+            }
+        }        
     })
 })
 
@@ -127,6 +136,22 @@ const RootMutationType = new GraphQLObjectType({
                 }
                 authorsdb.create(author)
                 return author
+            }
+        },
+        addBook: {
+            type: BookType,
+            description: 'Add an Author',
+            args: {                
+                title: { type: GraphQLNonNull(GraphQLString) },
+                authorId: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: (parent, args) => {                
+                const book = {
+                    title: args.title,
+                    authorId: args.authorId                    
+                }
+                booksdb.create(book)
+                return book
             }
         },
         deleteAuthor: {
