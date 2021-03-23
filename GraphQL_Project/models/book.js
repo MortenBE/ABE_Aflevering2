@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-//const renter = require("./renter");
+const renter = require("./renter");
 //const author = require("./author")
 const Schema = mongoose.Schema;
 
@@ -7,11 +7,11 @@ const Schema = mongoose.Schema;
 const bookSchema = new Schema({
   id: String,
   title: String,
-  authorId: String
+  authorId: String,
   //pages: String,
-  //rented: Boolean,
+  rented: Boolean,
   //author: author,
-  //rentedBy: renter  
+  renterId: String  
 });
 
 const Book = mongoose.model("Book", bookSchema);

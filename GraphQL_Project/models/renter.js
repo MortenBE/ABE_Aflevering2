@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-//Obs: role could change to roles array.
 const renterSchema = new Schema({
+  id: String,
   firstname: String,
   lastname: String
 });
