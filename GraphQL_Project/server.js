@@ -57,17 +57,6 @@ const RootQueryType = new GraphQLObjectType({
     name: 'Query',
     description: 'Root Query',
     fields: () => ({
-        /*
-        book: {
-            type: BookType,
-            description: 'A Single Book',
-            args: {
-                id: { type: GraphQLInt }
-            },
-            resolve: (parent, args) => books.find(book => book.id === args.id)
-        },
-        */
-        
         books: {
             type: new GraphQLList(BookType),
             description: 'List of Books',
@@ -173,14 +162,15 @@ const RootMutationType = new GraphQLObjectType({
                 return authorsdb.findByIdAndDelete(args.id)
             }
         }
-
     })
 })
 
+
 const schema = new GraphQLSchema({
-    query: RootQueryType,
+    query: RootQueryType,    
     mutation: RootMutationType
 })
+
 
 app.use('/graphql', expressGraphQL({
     schema: schema, 
