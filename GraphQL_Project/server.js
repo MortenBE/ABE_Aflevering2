@@ -1,6 +1,10 @@
 const express = require('express')
 const expressGraphQL = require('express-graphql').graphqlHTTP
 const mongoose = require('mongoose')
+const dotenv = require("dotenv")
+dotenv.config()
+const jwt = require("jsonwebtoken");
+const bcrypt = require('bcrypt');
 
 //var ObjectID = require('mongodb').ObjectID;
 var rentersdb = require("./models/renter");
@@ -50,7 +54,10 @@ const RenterType = new GraphQLObjectType({
     fields: () => ({
         _id: { type: GraphQLNonNull(GraphQLString) },
         firstname: { type: GraphQLNonNull(GraphQLString) },
-        lastname: { type: GraphQLNonNull(GraphQLString) },              
+        lastname: { type: GraphQLNonNull(GraphQLString) },
+        email: { type: GraphQLNonNull(GraphQLString) },
+        password: { type: GraphQLNonNull(GraphQLString) },
+        role: { type: GraphQLNonNull(GraphQLString) }              
     })
 })
 
@@ -245,6 +252,51 @@ const RootMutationType = new GraphQLObjectType({
             },
             resolve: async (parent, args) =>  {                
                 return rentersdb.findByIdAndDelete(args.id)
+            }
+        },
+        //================Authentication========================//
+        register: {
+            type: RenterType,
+            description: 'Register User',
+            args: {   
+                //id: {type: GraphQLNonNull(GraphQLString)}             
+                email: { type: GraphQLNonNull(GraphQLString) },
+                password: { type: GraphQLNonNull(GraphQLString) },
+                firstname: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: async (parent, args) => {                
+                const renter = {
+                    email: args.email,
+                    password: await bcrypt.hash(args.password, 10),
+                    firstname: args.firstname, 
+                    role: "Renter"                   
+                }
+                return rentersdb.create(renter)
+                //return renter
+            }
+        },
+        login: {
+            type: GraphQLString,
+            description: 'Login',
+            args: {   
+                //id: {type: GraphQLNonNull(GraphQLString)}             
+                email: { type: GraphQLNonNull(GraphQLString) },
+                password: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: async (parent, args) => {
+                const renter = await rentersdb.findOne({email: args.email});
+                if(!renter) {
+                    return null;
+                }
+                const valid = await bcrypt.compare(args.password, renter.password);
+                if(!valid) {
+                    return null;
+                }
+                const token = jwt.sign(
+                    { sub: renter.id, role: renter.role },
+                    process.env.ACCESS_TOKEN_SECRET
+                  ); 
+                return JSON.stringify(token);
             }
         }
 

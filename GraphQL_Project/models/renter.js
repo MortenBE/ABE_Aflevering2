@@ -4,7 +4,10 @@ const Schema = mongoose.Schema;
 const renterSchema = new Schema({
   id: String,
   firstname: String,
-  lastname: String
+  lastname: String,
+  email: String,
+  password: String,
+  role: String
 });
 
 const Renter = mongoose.model("Renter", renterSchema);
