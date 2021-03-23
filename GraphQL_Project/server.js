@@ -14,7 +14,8 @@ const {
     GraphQLString,
     GraphQLList,
     GraphQLInt,
-    GraphQLNonNull
+    GraphQLNonNull,
+    GraphQLBoolean
 } = require('graphql')
 
 const app = express()
@@ -25,7 +26,8 @@ const BookType = new GraphQLObjectType({
     fields: () => ({
         _id: { type: GraphQLNonNull(GraphQLString) },
         title: { type: GraphQLNonNull(GraphQLString) },
-        authorId: { type: GraphQLNonNull(GraphQLString) },       
+        authorId: { type: GraphQLNonNull(GraphQLString) }, 
+        rented: {type: GraphQLNonNull(GraphQLBoolean) },      
         author: {
             type: AuthorType,
             resolve: (book) => {               
@@ -35,23 +37,19 @@ const BookType = new GraphQLObjectType({
     })
 })
 
-
-
 const AuthorType = new GraphQLObjectType({
     name: 'Author',
     description: 'This is an author',
     fields: () => ({        
         firstname: { type: GraphQLNonNull(GraphQLString) },
         lastname: { type: GraphQLNonNull(GraphQLString) },
-        _id: { type: GraphQLNonNull(GraphQLString) }
-        /*
+        _id: { type: GraphQLNonNull(GraphQLString) },        
         books: {
             type: new GraphQLList(BookType),
             resolve: (author) => {
-                return books.filter(book => book.authorId === author.id);
+                return booksdb.find({authorId: author._id})
             }
-        }  
-        */      
+        }           
     })
 })
 
@@ -76,7 +74,17 @@ const RootQueryType = new GraphQLObjectType({
             resolve: () => {
                 return booksdb.find()
             }
-        },               
+        }, 
+        book: {
+            type: BookType,
+            description: 'A single book',
+            args: {
+                id: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: (parent, args) => {
+                return booksdb.findOne({_id: args.id})
+            }
+        },             
         authors: {
             type: new GraphQLList(AuthorType),
             description: 'List of all Authors',
@@ -148,7 +156,8 @@ const RootMutationType = new GraphQLObjectType({
             resolve: (parent, args) => {                
                 const book = {
                     title: args.title,
-                    authorId: args.authorId                    
+                    authorId: args.authorId,
+                    rented: false                    
                 }
                 booksdb.create(book)
                 return book

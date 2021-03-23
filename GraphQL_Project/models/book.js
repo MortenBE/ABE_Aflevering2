@@ -7,9 +7,10 @@ const Schema = mongoose.Schema;
 const bookSchema = new Schema({
   id: String,
   title: String,
-  authorId: String
+  authorId: String,
+  rented: Boolean
   //pages: String,
-  //rented: Boolean,
+  
   //author: author,
   //rentedBy: renter  
 });
