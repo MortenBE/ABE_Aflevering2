@@ -3,7 +3,7 @@ const expressGraphQL = require('express-graphql').graphqlHTTP
 const mongoose = require('mongoose')
 
 //var ObjectID = require('mongodb').ObjectID;
-
+var rentersdb = require("./models/renter");
 var authorsdb = require("./models/author");
 var booksdb = require("./models/book");
 
@@ -32,8 +32,25 @@ const BookType = new GraphQLObjectType({
             type: AuthorType,
             resolve: (book) => {               
                 return authorsdb.findOne({_id: book.authorId})           
+            },
+        rented: { type: GraphQLNonNull(GraphQLBoolean) },
+        renterId: { type: GraphQLNonNull(GraphQLString) },
+        renter: {
+            type: RenterType,
+            resolve: (book) => {               
+                return renterId.findOne({_id: book.renterId}) } 
             }
-        }        
+        }      
+    })
+})
+
+const RenterType = new GraphQLObjectType({
+    name: 'Renter',
+    description: 'This is a renter of books',
+    fields: () => ({
+        _id: { type: GraphQLNonNull(GraphQLString) },
+        firstname: { type: GraphQLNonNull(GraphQLString) },
+        lastname: { type: GraphQLNonNull(GraphQLString) },              
     })
 })
 
@@ -57,6 +74,34 @@ const RootQueryType = new GraphQLObjectType({
     name: 'Query',
     description: 'Root Query',
     fields: () => ({
+        /*
+        book: {
+            type: BookType,
+            description: 'A Single Book',
+            args: {
+                id: { type: GraphQLInt }
+            },
+            resolve: (parent, args) => books.find(book => book.id === args.id)
+        },
+        */
+        renter: {
+            type: AuthorType,
+            description: 'A Single Renter by ID',
+            args: {
+                id: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: (parent, args) => {
+                return rentersdb.findOne({_id: args.id})
+            }
+        },
+
+        renters: {
+            type: new GraphQLList(AuthorType),
+            description: 'List of all Renters',
+            resolve: () => {
+                return rentersdb.find()
+            }
+        }, 
         books: {
             type: new GraphQLList(BookType),
             description: 'List of Books',
@@ -140,18 +185,47 @@ const RootMutationType = new GraphQLObjectType({
             description: 'Add an Author',
             args: {                
                 title: { type: GraphQLNonNull(GraphQLString) },
-                authorId: { type: GraphQLNonNull(GraphQLString) }
+                authorId: { type: GraphQLNonNull(GraphQLString) },
+                renterId: { type: GraphQLNonNull(GraphQLString) },                
             },
             resolve: (parent, args) => {                
                 const book = {
                     title: args.title,
                     authorId: args.authorId,
-                    rented: false                    
+                    rented: false,
+                    renterId: args.renterId                                      
                 }
                 booksdb.create(book)
                 return book
             }
         },
+        addRenter: {
+            type: RenterType,
+            description: 'Add a Renter',
+            args: {                
+                firstname: { type: GraphQLNonNull(GraphQLString) },
+                lastname: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: (parent, args) => {                
+                const renter = {
+                    firstname: args.firstname,
+                    lastname: args.lastname                    
+                }
+                rentersdb.create(renter)
+                return renter
+            }
+        },
+        deleteBook: {
+            type: BookType,
+            description: 'Delete a book',
+            args: {                
+                id: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: async (parent, args) =>  {                
+                return booksdb.findByIdAndDelete(args.id)
+            }
+        }
+        ,
         deleteAuthor: {
             type: AuthorType,
             description: 'Delete an Author',
@@ -162,6 +236,18 @@ const RootMutationType = new GraphQLObjectType({
                 return authorsdb.findByIdAndDelete(args.id)
             }
         }
+        ,
+        deleteRetner: {
+            type: RenterType,
+            description: 'Delete an Renter',
+            args: {                
+                id: { type: GraphQLNonNull(GraphQLString) }
+            },
+            resolve: async (parent, args) =>  {                
+                return rentersdb.findByIdAndDelete(args.id)
+            }
+        }
+
     })
 })
 
